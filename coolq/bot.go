@@ -195,7 +195,7 @@ func (bot *CQBot) uploadLocalVideo(target message.Source, v *msg.LocalVideo) (*m
 		return nil, err
 	}
 	defer func() { _ = video.Close() }()
-	return bot.Client.UploadShortVideo(target, message.NewSteramVideo(video, v.Thumb))
+	return bot.Client.UploadShortVideo(target, message.NewStreamVideo(video, v.Thumb))
 }
 
 func removeLocalElement(elements []message.IMessageElement) []message.IMessageElement {
@@ -301,7 +301,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 		return -1, errors.New("empty message")
 	}
 	m.Elements = newElem
-	bot.checkMedia(newElem, groupID)
+	bot.checkMedia(newElem, source)
 	ret, err := bot.Client.SendGroupMessage(uint32(groupID), m.Elements, false)
 	if err != nil || ret == nil {
 		if errors.Is(err, sign.VersionMismatchError) {
@@ -340,7 +340,7 @@ func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.Sen
 		return -1
 	}
 	m.Elements = newElem
-	bot.checkMedia(newElem, int64(bot.Client.Uin))
+	bot.checkMedia(newElem, source)
 
 	// 单向好友是否存在
 	//unidirectionalFriendExists := func() bool {

@@ -173,7 +173,7 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 		case *message.ImageElement:
 			data := pairs{
 				{K: "file", V: hex.EncodeToString(o.Md5) + ".image"},
-				{K: "subType", V: strconv.FormatInt(int64(o.ImageType), 10)},
+				{K: "subType", V: strconv.FormatInt(int64(o.SubType), 10)},
 				{K: "url", V: o.Url},
 			}
 			//switch {
@@ -345,7 +345,7 @@ func ToMessageContent(e []message.IMessageElement, source message.Source) (r []g
 				"data": global.MSG{"file": o.Name, "url": o.Url},
 			}
 		case *message.ImageElement:
-			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url, "subType": uint32(o.ImageType)}
+			data := global.MSG{"file": hex.EncodeToString(o.Md5) + ".image", "url": o.Url, "subType": uint32(o.SubType)}
 			switch {
 			case o.Flash:
 				data["type"] = "flash"
@@ -657,9 +657,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 			img.Flash = flash
 			img.EffectID = int32(id)
 			i, _ := strconv.ParseInt(elem.Get("subType"), 10, 64)
-			img.ImageType = int32(i)
-			//case *message.FriendImageElement:
-			//	img.Flash = flash
+			img.SubType = int32(i)
 		}
 		return img, nil
 	case "reply":
@@ -1004,34 +1002,22 @@ func (bot *CQBot) readImageCache(b []byte, sourceType message.SourceType) (messa
 		return nil, errors.New("invalid cache")
 	}
 	r := binary.NewReader(b)
-	_ = r.ReadBytes(16)
-	//hash := r.ReadBytes(16)
-	size := r.ReadI32()
-	r.ReadStringWithLength("u32", true)
-	imageURL := r.ReadStringWithLength("u32", true)
-	if size == 0 && imageURL != "" {
-		// TODO: fix this
-		var elem msg.Element
-		elem.Type = "image"
-		elem.Data = []msg.Pair{{K: "file", V: imageURL}}
-		return bot.makeImageOrVideoElem(elem, false, sourceType)
+	hash := r.ReadBytes(16)
+	fileUuid := r.ReadStringWithLength("u32", true)
+	var rsp *message.ImageElement
+	switch sourceType { // nolint:exhaustive
+	case message.SourceGroup:
+		rsp, err = bot.Client.QueryGroupImage(hash, fileUuid)
+	default:
+		rsp, err = bot.Client.QueryFriendImage(hash, fileUuid)
 	}
-	var rsp message.IMessageElement
-	// TODO 不知道这里是干嘛的
-	//switch sourceType { // nolint:exhaustive
-	//case message.SourceGroup:
-	//	rsp, err = bot.Client.QueryGroupImage(int64(rand.Uint32()), hash, size)
-	//default:
-	//	rsp, err = bot.Client.QueryFriendImage(int64(rand.Uint32()), hash, size)
-	//}
-	err = errors.New("unsuport error")
-	if err != nil && imageURL != "" {
-		var elem msg.Element
-		elem.Type = "image"
-		elem.Data = []msg.Pair{{K: "file", V: imageURL}}
-		return bot.makeImageOrVideoElem(elem, false, sourceType)
+	if err != nil || rsp.Url == "" {
+		return nil, errors.New("unsuport error")
 	}
-	return rsp, err
+	return bot.makeImageOrVideoElem(msg.Element{
+		Type: "image",
+		Data: []msg.Pair{{K: "file", V: rsp.Url}},
+	}, false, sourceType)
 }
 
 func (bot *CQBot) readVideoCache(b []byte) message.IMessageElement {

@@ -79,11 +79,11 @@ func (ev *event) MarshalJSON() ([]byte, error) {
 }
 
 func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMessage) {
-	bot.checkMedia(m.Elements, int64(m.Sender.Uin))
 	source := message.Source{
 		SourceType: message.SourcePrivate,
 		PrimaryID:  int64(m.Sender.Uin),
 	}
+	bot.checkMedia(m.Elements, source)
 	cqm := toStringMessage(m.Elements, source)
 	id := bot.InsertPrivateMessage(m, source)
 	log.Infof("收到好友 %v(%v) 的消息: %v (%v)", m.Sender.Nickname, m.Sender.Uin, cqm, id)
@@ -109,7 +109,11 @@ func (bot *CQBot) privateMessageEvent(_ *client.QQClient, m *message.PrivateMess
 }
 
 func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage) {
-	bot.checkMedia(m.Elements, int64(m.GroupUin))
+	source := message.Source{
+		SourceType: message.SourceGroup,
+		PrimaryID:  int64(m.GroupUin),
+	}
+	bot.checkMedia(m.Elements, source)
 	// TODO 群聊文件上传
 	//for _, elem := range m.Elements {
 	//	if file, ok := elem.(*message.GroupFileElement); ok {
@@ -128,10 +132,6 @@ func (bot *CQBot) groupMessageEvent(c *client.QQClient, m *message.GroupMessage)
 	//		// return
 	//	}
 	//}
-	source := message.Source{
-		SourceType: message.SourceGroup,
-		PrimaryID:  int64(m.GroupUin),
-	}
 	cqm := toStringMessage(m.Elements, source)
 	id := bot.InsertGroupMessage(m, source)
 	log.Infof("收到群 %v(%v) 内 %v(%v) 的消息: %v (%v)", m.GroupName, m.GroupUin, m.Sender.CardName, m.Sender.Uin, cqm, id)
@@ -528,11 +528,11 @@ func (bot *CQBot) groupDecrease(groupCode, userUin int64, operator *entity.Group
 	})
 }
 
-func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
+func (bot *CQBot) checkMedia(e []message.IMessageElement, source message.Source) {
 	for _, elem := range e {
 		switch i := elem.(type) {
 		case *message.ImageElement:
-			// 闪照已经4了
+			// 闪照已经4了(私聊还没)
 			//if i.Flash && sourceID != 0 {
 			//	u, err := bot.Client.GetGroupImageDownloadUrl(i.FileId, sourceID, i.Md5)
 			//	if err != nil {
@@ -543,20 +543,10 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 			//}
 			data := binary.NewWriterF(func(w *binary.Builder) {
 				w.Write(i.Md5)
-				w.WriteU32(i.Size)
+				w.WritePacketString(i.FileUUID, "u32", true)
 				w.WritePacketString(i.ImageId, "u32", true)
-				w.WritePacketString(i.Url, "u32", true)
 			})
 			cache.Image.Insert(i.Md5, data)
-
-		//case *message.FriendImageElement:
-		//	data := binary.NewWriterF(func(w *binary.Writer) {
-		//		w.Write(i.Md5)
-		//		w.WriteUInt32(uint32(i.Size))
-		//		w.WriteString(i.ImageId)
-		//		w.WriteString(i.Url)
-		//	})
-		//	cache.Image.Insert(i.Md5, data)
 
 		case *message.VoiceElement:
 			// todo: don't download original file?
@@ -572,17 +562,14 @@ func (bot *CQBot) checkMedia(e []message.IMessageElement, sourceID int64) {
 		case *message.ShortVideoElement:
 			data := binary.NewWriterF(func(w *binary.Builder) {
 				w.Write(i.Md5)
-				w.Write(i.Thumb.Md5)
-				w.WriteU32(i.Size)
-				w.WriteU32(i.Thumb.Size)
+				w.Write(i.Sha1)
 				w.WritePacketString(i.Name, "u32", true)
-				w.Write(i.Uuid)
+				w.WritePacketBytes(i.Uuid, "u32", true)
 			})
 			filename := hex.EncodeToString(i.Md5) + ".video"
 			cache.Video.Insert(i.Md5, data)
+			i.Url, _ = bot.Client.GetVideoUrl(source.SourceType == message.SourceGroup, i)
 			i.Name = filename
-			// TODO 获取短视频链接
-			//i.Url = bot.Client.GetShortVideoUrl(i.Uuid, i.Md5)
 		}
 	}
 }
