@@ -1471,62 +1471,65 @@ func (bot *CQBot) CQGetStatus(spec *onebot.Spec) global.MSG {
 //
 // https://docs.go-cqhttp.org/api/#%E8%AE%BE%E7%BD%AE%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 // @route(set_essence_msg)
-//func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
-//	msg, err := db.GetGroupMessageByGlobalID(messageID)
-//	if err != nil {
-//		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
-//	}
-//	if err := bot.Client.SetEssenceMessage(msg.GroupCode, msg.Attribute.MessageSeq, msg.Attribute.InternalID); err != nil {
-//		log.Warnf("设置精华消息 %v 失败: %v", messageID, err)
-//		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
-//	}
-//	return OK(nil)
-//}
+func (bot *CQBot) CQSetEssenceMessage(messageID int32) global.MSG {
+	msg, err := db.GetGroupMessageByGlobalID(messageID)
+	if err != nil {
+		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
+	}
+	if err := bot.Client.SetEssenceMessage(uint32(msg.GroupCode), uint32(msg.Attribute.MessageSeq), uint32(msg.Attribute.InternalID), true); err != nil {
+		log.Warnf("设置精华消息 %v 失败: %v", messageID, err)
+		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
+	}
+	return OK(nil)
+}
 
 // CQDeleteEssenceMessage 扩展API-移出精华消息
 //
 // https://docs.go-cqhttp.org/api/#%E7%A7%BB%E5%87%BA%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF
 // @route(delete_essence_msg)
-//func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) global.MSG {
-//	msg, err := db.GetGroupMessageByGlobalID(messageID)
-//	if err != nil {
-//		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
-//	}
-//	if err := bot.Client.DeleteEssenceMessage(msg.GroupCode, msg.Attribute.MessageSeq, msg.Attribute.InternalID); err != nil {
-//		log.Warnf("删除精华消息 %v 失败: %v", messageID, err)
-//		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
-//	}
-//	return OK(nil)
-//}
+func (bot *CQBot) CQDeleteEssenceMessage(messageID int32) global.MSG {
+	msg, err := db.GetGroupMessageByGlobalID(messageID)
+	if err != nil {
+		return Failed(100, "MESSAGE_NOT_FOUND", "消息不存在")
+	}
+	if err := bot.Client.SetEssenceMessage(uint32(msg.GroupCode), uint32(msg.Attribute.MessageSeq), uint32(msg.Attribute.InternalID), false); err != nil {
+		log.Warnf("删除精华消息 %v 失败: %v", messageID, err)
+		return Failed(100, "SET_ESSENCE_MSG_ERROR", err.Error())
+	}
+	return OK(nil)
+}
 
 // CQGetEssenceMessageList 扩展API-获取精华消息列表
 //
 // https://docs.go-cqhttp.org/api/#%E8%8E%B7%E5%8F%96%E7%B2%BE%E5%8D%8E%E6%B6%88%E6%81%AF%E5%88%97%E8%A1%A8
 // @route(get_essence_msg_list)
-//func (bot *CQBot) CQGetEssenceMessageList(groupID int64) global.MSG {
-//	g := bot.Client.FindGroup(groupID)
-//	if g == nil {
-//		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
-//	}
-//	msgList, err := bot.Client.GetGroupEssenceMsgList(groupID)
-//	if err != nil {
-//		return Failed(100, "GET_ESSENCE_LIST_FOUND", err.Error())
-//	}
-//	list := make([]global.MSG, 0, len(msgList))
-//	for _, m := range msgList {
-//		msg := global.MSG{
-//			"sender_nick":   m.SenderNick,
-//			"sender_time":   m.SenderTime,
-//			"operator_time": m.AddDigestTime,
-//			"operator_nick": m.AddDigestNick,
-//			"sender_id":     m.SenderUin,
-//			"operator_id":   m.AddDigestUin,
-//		}
-//		msg["message_id"] = db.ToGlobalID(groupID, int32(m.MessageID))
-//		list = append(list, msg)
-//	}
-//	return OK(list)
-//}
+func (bot *CQBot) CQGetEssenceMessageList(groupID int64) global.MSG {
+	g := bot.Client.GetCachedGroupInfo(uint32(groupID))
+	if g == nil {
+		return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+	}
+	msgList, err := bot.Client.FetchEssenceMessage(uint32(groupID))
+	if err != nil {
+		return Failed(100, "GET_ESSENCE_LIST_FOUND", err.Error())
+	}
+	list := make([]global.MSG, 0, len(msgList))
+	for _, m := range msgList {
+		msg := global.MSG{
+			"sender_nick":   m.Message.Sender.Nickname,
+			"sender_time":   m.Message.Time,
+			"operator_time": m.OperatorTime,
+			"operator_nick": "",
+			"sender_id":     m.Message.Sender.Nickname,
+			"operator_id":   m.OperatorUin,
+		}
+		if operator := bot.Client.GetCachedMemberInfo(m.OperatorUin, uint32(groupID)); operator != nil {
+			msg["operator_nick"] = operator.MemberName
+		}
+		msg["message_id"] = db.ToGlobalID(groupID, int32(m.Message.Id))
+		list = append(list, msg)
+	}
+	return OK(list)
+}
 
 // CQCheckURLSafely 扩展API-检查链接安全性
 //
