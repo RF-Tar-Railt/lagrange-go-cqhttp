@@ -315,7 +315,7 @@ func (bot *CQBot) SendGroupMessage(groupID int64, m *message.SendingMessage) (in
 }
 
 // SendPrivateMessage 发送私聊消息
-func (bot *CQBot) SendPrivateMessage(target int64, groupID int64, m *message.SendingMessage) int32 {
+func (bot *CQBot) SendPrivateMessage(target int64, _ int64, m *message.SendingMessage) int32 {
 	newElem := make([]message.IMessageElement, 0, len(m.Elements))
 	source := message.Source{
 		SourceType: message.SourcePrivate,
@@ -474,6 +474,7 @@ func (bot *CQBot) InsertPrivateMessage(m *message.PrivateMessage, source message
 		SubType:  "normal",
 		Attribute: &db.StoredMessageAttribute{
 			MessageSeq: int32(m.Id),
+			ClientSeq:  int32(m.ClientSeq),
 			InternalID: int32(m.InternalId),
 			SenderUin:  int64(m.Sender.Uin),
 			SenderName: m.Sender.Nickname,
