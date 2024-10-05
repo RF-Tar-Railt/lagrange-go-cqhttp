@@ -94,24 +94,20 @@ func NewQQBot(cli *client.QQClient) *CQBot {
 	bot.Client.FriendRecallEvent.Subscribe(bot.friendRecallEvent)
 	// TODO 离线文件
 	//bot.Client.OfflineFileEvent.Subscribe(bot.offlineFileEvent)
-	// TODO bot加群
 	bot.Client.GroupJoinEvent.Subscribe(bot.joinGroupEvent)
-	// TODO bot退群
 	bot.Client.GroupLeaveEvent.Subscribe(bot.leaveGroupEvent)
 	bot.Client.GroupMemberJoinEvent.Subscribe(bot.memberJoinEvent)
 	bot.Client.GroupMemberLeaveEvent.Subscribe(bot.memberLeaveEvent)
-	// TODO 群成员权限变更
-	//bot.Client.GroupMemberPermissionChangedEvent.Subscribe(bot.memberPermissionChangedEvent)
+	bot.Client.GroupMemberPermissionChangedEvent.Subscribe(bot.memberPermissionChangedEvent)
 	// TODO 群成员名片更新
 	//bot.Client.MemberCardUpdatedEvent.Subscribe(bot.memberCardUpdatedEvent)
 	bot.Client.NewFriendRequestEvent.Subscribe(bot.friendRequestEvent)
 	// TODO 成为好友
 	//bot.Client.NewFriendEvent.Subscribe(bot.friendAddedEvent)
-	//bot.Client.GroupInvitedEvent.Subscribe(bot.groupInvitedEvent)
-	//bot.Client.GroupMemberJoinRequestEvent.Subscribe(bot.groupJoinReqEvent)
+	bot.Client.GroupInvitedEvent.Subscribe(bot.groupInvitedEvent)
+	bot.Client.GroupMemberJoinRequestEvent.Subscribe(bot.groupJoinReqEvent)
 	// TODO 客户端变更
 	//bot.Client.OtherClientStatusChangedEvent.Subscribe(bot.otherClientStatusChangedEvent)
-	// TODO 精华消息
 	bot.Client.GroupDigestEvent.Subscribe(bot.groupEssenceMsg)
 	go func() {
 		if base.HeartbeatInterval == 0 {
@@ -187,7 +183,6 @@ func (bot *CQBot) uploadLocalImage(target message.Source, img *msg.LocalImage) (
 	return bot.Client.UploadImage(target, message.NewStreamImage(img.Stream))
 }
 
-// TODO 短视频上传
 // uploadLocalVideo 上传本地短视频至群聊
 func (bot *CQBot) uploadLocalVideo(target message.Source, v *msg.LocalVideo) (*message.ShortVideoElement, error) {
 	video, err := os.Open(v.File)
@@ -252,7 +247,6 @@ func (bot *CQBot) uploadMedia(target message.Source, elements []message.IMessage
 					*p = m
 				}
 			})
-		// TODO 短视频上传
 		case *msg.LocalVideo:
 			w.do(func() {
 				m, err := bot.uploadLocalVideo(target, e)
