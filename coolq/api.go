@@ -1222,39 +1222,40 @@ func (bot *CQBot) CQDownloadFile(url string, headers gjson.Result, threadCount i
 // https://git.io/Jtz1F
 // @route(get_forward_msg)
 // @rename(res_id->"[message_id\x2Cid].0")
-//func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
-//	m := bot.Client.GetForwardMessage(resID)
-//	if m == nil {
-//		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
-//	}
-//
-//	var transformNodes func(nodes []*message.ForwardNode) []global.MSG
-//	transformNodes = func(nodes []*message.ForwardNode) []global.MSG {
-//		r := make([]global.MSG, len(nodes))
-//		for i, n := range nodes {
-//			bot.checkMedia(n.Message, 0)
-//			content := ToFormattedMessage(n.Message, message.Source{SourceType: message.SourceGroup})
-//			if len(n.Message) == 1 {
-//				if forward, ok := n.Message[0].(*message.ForwardMessage); ok {
-//					content = transformNodes(forward.Nodes)
-//				}
-//			}
-//			r[i] = global.MSG{
-//				"sender": global.MSG{
-//					"user_id":  n.SenderId,
-//					"nickname": n.SenderName,
-//				},
-//				"time":     n.Time,
-//				"content":  content,
-//				"group_id": n.GroupId,
-//			}
-//		}
-//		return r
-//	}
-//	return OK(global.MSG{
-//		"messages": transformNodes(m.Nodes),
-//	})
-//}
+func (bot *CQBot) CQGetForwardMessage(resID string) global.MSG {
+	m, err := bot.Client.FetchForwardMsg(resID)
+	if err != nil {
+		return Failed(100, "MSG_NOT_FOUND", "消息不存在")
+	}
+
+	var transformNodes func(nodes []*message.ForwardNode) []global.MSG
+	transformNodes = func(nodes []*message.ForwardNode) []global.MSG {
+		r := make([]global.MSG, len(nodes))
+		for i, n := range nodes {
+			source := message.Source{SourceType: message.SourceGroup}
+			bot.checkMedia(n.Message, source)
+			content := ToFormattedMessage(n.Message, source)
+			if len(n.Message) == 1 {
+				if forward, ok := n.Message[0].(*message.ForwardMessage); ok {
+					content = transformNodes(forward.Nodes)
+				}
+			}
+			r[i] = global.MSG{
+				"sender": global.MSG{
+					"user_id":  n.SenderId,
+					"nickname": n.SenderName,
+				},
+				"time":     n.Time,
+				"content":  content,
+				"group_id": n.GroupId,
+			}
+		}
+		return r
+	}
+	return OK(global.MSG{
+		"messages": transformNodes(m.Nodes),
+	})
+}
 
 // CQGetMessage 获取消息
 //
