@@ -948,68 +948,68 @@ func (bot *CQBot) CQSetGroupAdmin(groupID, userID int64, enable bool) global.MSG
 // https://git.io/Jtz1H
 // @route(get_group_honor_info)
 // @rename(t->type)
-//func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
-//	msg := global.MSG{"group_id": groupID}
-//	convertMem := func(memList []client.HonorMemberInfo) (ret []global.MSG) {
-//		for _, mem := range memList {
-//			ret = append(ret, global.MSG{
-//				"user_id":     mem.Uin,
-//				"nickname":    mem.Name,
-//				"avatar":      mem.Avatar,
-//				"description": mem.Desc,
-//			})
-//		}
-//		return
-//	}
-//	if t == "talkative" || t == "all" {
-//		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Talkative); err == nil {
-//			if honor.CurrentTalkative.Uin != 0 {
-//				msg["current_talkative"] = global.MSG{
-//					"user_id":   honor.CurrentTalkative.Uin,
-//					"nickname":  honor.CurrentTalkative.Name,
-//					"avatar":    honor.CurrentTalkative.Avatar,
-//					"day_count": honor.CurrentTalkative.DayCount,
-//				}
-//			}
-//			msg["talkative_list"] = convertMem(honor.TalkativeList)
-//		} else {
-//			log.Infof("获取群龙王出错：%v", err)
-//		}
-//	}
-//
-//	if t == "performer" || t == "all" {
-//		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Performer); err == nil {
-//			msg["performer_list"] = convertMem(honor.ActorList)
-//		} else {
-//			log.Infof("获取群聊之火出错：%v", err)
-//		}
-//	}
-//
-//	if t == "legend" || t == "all" {
-//		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Legend); err == nil {
-//			msg["legend_list"] = convertMem(honor.LegendList)
-//		} else {
-//			log.Infof("获取群聊炽焰出错：%v", err)
-//		}
-//	}
-//
-//	if t == "strong_newbie" || t == "all" {
-//		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.StrongNewbie); err == nil {
-//			msg["strong_newbie_list"] = convertMem(honor.StrongNewbieList)
-//		} else {
-//			log.Infof("获取冒尖小春笋出错：%v", err)
-//		}
-//	}
-//
-//	if t == "emotion" || t == "all" {
-//		if honor, err := bot.Client.GetGroupHonorInfo(groupID, client.Emotion); err == nil {
-//			msg["emotion_list"] = convertMem(honor.EmotionList)
-//		} else {
-//			log.Infof("获取快乐之源出错：%v", err)
-//		}
-//	}
-//	return OK(msg)
-//}
+func (bot *CQBot) CQGetGroupHonorInfo(groupID int64, t string) global.MSG {
+	msg := global.MSG{"group_id": groupID}
+	convertMem := func(memList []entity.HonorMemberInfo) (ret []global.MSG) {
+		for _, mem := range memList {
+			ret = append(ret, global.MSG{
+				"user_id":     mem.Uin,
+				"nickname":    mem.Name,
+				"avatar":      mem.Avatar,
+				"description": mem.Desc,
+			})
+		}
+		return
+	}
+	if t == "talkative" || t == "all" {
+		if honor, err := bot.Client.GetGroupHonorInfo(uint32(groupID), entity.Talkative); err == nil {
+			if honor.CurrentTalkative.Uin != 0 {
+				msg["current_talkative"] = global.MSG{
+					"user_id":   honor.CurrentTalkative.Uin,
+					"nickname":  honor.CurrentTalkative.Name,
+					"avatar":    honor.CurrentTalkative.Avatar,
+					"day_count": honor.CurrentTalkative.DayCount,
+				}
+			}
+			msg["talkative_list"] = convertMem(honor.TalkativeList)
+		} else {
+			log.Infof("获取群龙王出错：%v", err)
+		}
+	}
+
+	if t == "performer" || t == "all" {
+		if honor, err := bot.Client.GetGroupHonorInfo(uint32(groupID), entity.Performer); err == nil {
+			msg["performer_list"] = convertMem(honor.ActorList)
+		} else {
+			log.Infof("获取群聊之火出错：%v", err)
+		}
+	}
+
+	if t == "legend" || t == "all" {
+		if honor, err := bot.Client.GetGroupHonorInfo(uint32(groupID), entity.Legend); err == nil {
+			msg["legend_list"] = convertMem(honor.LegendList)
+		} else {
+			log.Infof("获取群聊炽焰出错：%v", err)
+		}
+	}
+
+	if t == "strong_newbie" || t == "all" {
+		if honor, err := bot.Client.GetGroupHonorInfo(uint32(groupID), entity.StrongNewbie); err == nil {
+			msg["strong_newbie_list"] = convertMem(honor.StrongNewbieList)
+		} else {
+			log.Infof("获取冒尖小春笋出错：%v", err)
+		}
+	}
+
+	if t == "emotion" || t == "all" {
+		if honor, err := bot.Client.GetGroupHonorInfo(uint32(groupID), entity.Emotion); err == nil {
+			msg["emotion_list"] = convertMem(honor.EmotionList)
+		} else {
+			log.Infof("获取快乐之源出错：%v", err)
+		}
+	}
+	return OK(msg)
+}
 
 // CQGetStrangerInfo 获取陌生人信息
 //
@@ -1034,7 +1034,7 @@ func (bot *CQBot) CQGetStrangerInfo(userID int64) global.MSG {
 			// unknown = 0x2
 			return "unknown"
 		}(),
-		//"sign":       info.Sign,
+		"sign": info.PersonalSign,
 		//"age":        info.Age,
 		//"level":      info.Level,
 		//"login_days": info.LoginDays,
