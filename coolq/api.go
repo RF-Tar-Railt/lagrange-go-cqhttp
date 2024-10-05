@@ -666,61 +666,61 @@ func (bot *CQBot) CQSetGroupName(groupID int64, name string) global.MSG {
 
 // CQGetGroupMemo 扩展API-获取群公告
 // @route(_get_group_notice)
-//func (bot *CQBot) CQGetGroupMemo(groupID int64) global.MSG {
-//	r, err := bot.Client.GetGroupNotice(groupID)
-//	if err != nil {
-//		return Failed(100, "获取群公告失败", err.Error())
-//	}
-//
-//	return OK(r)
-//}
+func (bot *CQBot) CQGetGroupMemo(groupID int64) global.MSG {
+	r, err := bot.Client.GetGroupNotice(uint32(groupID))
+	if err != nil {
+		return Failed(100, "获取群公告失败", err.Error())
+	}
+
+	return OK(r)
+}
 
 // CQSetGroupMemo 扩展API-发送群公告
 //
 // https://docs.go-cqhttp.org/api/#%E5%8F%91%E9%80%81%E7%BE%A4%E5%85%AC%E5%91%8A
 // @route(_send_group_notice)
 // @rename(msg->content, img->image)
-//func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
-//	if g := bot.Client.FindGroup(groupID); g != nil {
-//		if g.SelfPermission() == client.Member {
-//			return Failed(100, "PERMISSION_DENIED", "权限不足")
-//		}
-//		if img != "" {
-//			data, err := global.FindFile(img, "", global.ImagePath)
-//			if err != nil {
-//				return Failed(100, "IMAGE_NOT_FOUND", "图片未找到")
-//			}
-//			noticeID, err := bot.Client.AddGroupNoticeWithPic(groupID, msg, data)
-//			if err != nil {
-//				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
-//			}
-//			return OK(global.MSG{"notice_id": noticeID})
-//		}
-//		noticeID, err := bot.Client.AddGroupNoticeSimple(groupID, msg)
-//		if err != nil {
-//			return Failed(100, "SEND_NOTICE_ERROR", err.Error())
-//		}
-//		return OK(global.MSG{"notice_id": noticeID})
-//	}
-//	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
-//}
+func (bot *CQBot) CQSetGroupMemo(groupID int64, msg, img string) global.MSG {
+	if g := bot.Client.GetCachedGroupInfo(uint32(groupID)); g != nil {
+		if s := bot.Client.GetCachedMemberInfo(uint32(groupID), uint32(groupID)); s != nil && s.Permission == entity.Member {
+			return Failed(100, "PERMISSION_DENIED", "权限不足")
+		}
+		if img != "" {
+			data, err := global.FindFile(img, "", global.ImagePath)
+			if err != nil {
+				return Failed(100, "IMAGE_NOT_FOUND", "图片未找到")
+			}
+			noticeID, err := bot.Client.AddGroupNoticeWithPic(uint32(groupID), msg, data)
+			if err != nil {
+				return Failed(100, "SEND_NOTICE_ERROR", err.Error())
+			}
+			return OK(global.MSG{"notice_id": noticeID})
+		}
+		noticeID, err := bot.Client.AddGroupNoticeSimple(uint32(groupID), msg)
+		if err != nil {
+			return Failed(100, "SEND_NOTICE_ERROR", err.Error())
+		}
+		return OK(global.MSG{"notice_id": noticeID})
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
 
 // CQDelGroupMemo 扩展API-删除群公告
 // @route(_del_group_notice)
 // @rename(fid->notice_id)
-//func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
-//	if g := bot.Client.FindGroup(groupID); g != nil {
-//		if g.SelfPermission() == client.Member {
-//			return Failed(100, "PERMISSION_DENIED", "权限不足")
-//		}
-//		err := bot.Client.DelGroupNotice(groupID, fid)
-//		if err != nil {
-//			return Failed(100, "DELETE_NOTICE_ERROR", err.Error())
-//		}
-//		return OK(nil)
-//	}
-//	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
-//}
+func (bot *CQBot) CQDelGroupMemo(groupID int64, fid string) global.MSG {
+	if g := bot.Client.GetCachedGroupInfo(uint32(groupID)); g != nil {
+		if s := bot.Client.GetCachedMemberInfo(uint32(groupID), uint32(groupID)); s != nil && s.Permission == entity.Member {
+			return Failed(100, "PERMISSION_DENIED", "权限不足")
+		}
+		err := bot.Client.DelGroupNotice(uint32(groupID), fid)
+		if err != nil {
+			return Failed(100, "DELETE_NOTICE_ERROR", err.Error())
+		}
+		return OK(nil)
+	}
+	return Failed(100, "GROUP_NOT_FOUND", "群聊不存在")
+}
 
 // CQSetGroupKick 群组踢人
 //
