@@ -88,13 +88,14 @@ func printQRCode(imgData []byte) {
 			isUpWhite := img.At(x, y).(color.Gray).Y == 255
 			isDownWhite := utils.Ternary(y < bound-padding, img.At(x, y+1).(color.Gray).Y == 255, false)
 
-			if !isUpWhite && !isDownWhite {
+			switch {
+			case !isUpWhite && !isDownWhite:
 				buf = append(buf, bb...)
-			} else if isUpWhite && !isDownWhite {
+			case isUpWhite && !isDownWhite:
 				buf = append(buf, wb...)
-			} else if !isUpWhite {
+			case !isUpWhite:
 				buf = append(buf, bw...)
-			} else {
+			default:
 				buf = append(buf, ww...)
 			}
 		}
