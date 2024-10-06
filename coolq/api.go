@@ -838,33 +838,32 @@ func (bot *CQBot) CQProcessGroupRequest(flag, subType, reason string, approve bo
 		log.Warnf("获取群系统消息失败: %v", err)
 		return Failed(100, "SYSTEM_MSG_API_ERROR", err.Error())
 	}
-	msgs = append(msgs, filteredmsgs...)
 	if subType == "add" {
-		for _, req := range msgs {
+		for _, req := range append(msgs.JoinRequests, filteredmsgs.JoinRequests...) {
 			if strconv.FormatInt(int64(req.Sequence), 10) == flag {
 				if req.Checked() {
 					log.Warnf("处理群系统消息失败: 无法操作已处理的消息.")
 					return Failed(100, "FLAG_HAS_BEEN_CHECKED", "消息已被处理")
 				}
 				if approve {
-					_ = bot.Client.SetGroupRequest(req.IsFiltered, true, req.Sequence, req.EventType, req.GroupUin, "")
+					_ = bot.Client.SetGroupRequest(req.IsFiltered, true, req.Sequence, uint32(req.EventType), req.GroupUin, "")
 				} else {
-					_ = bot.Client.SetGroupRequest(req.IsFiltered, false, req.Sequence, req.EventType, req.GroupUin, reason)
+					_ = bot.Client.SetGroupRequest(req.IsFiltered, false, req.Sequence, uint32(req.EventType), req.GroupUin, reason)
 				}
 				return OK(nil)
 			}
 		}
 	} else {
-		for _, req := range msgs {
+		for _, req := range append(msgs.InvitedRequests, filteredmsgs.InvitedRequests...) {
 			if strconv.FormatInt(int64(req.Sequence), 10) == flag {
 				if req.Checked() {
 					log.Warnf("处理群系统消息失败: 无法操作已处理的消息.")
 					return Failed(100, "FLAG_HAS_BEEN_CHECKED", "消息已被处理")
 				}
 				if approve {
-					_ = bot.Client.SetGroupRequest(req.IsFiltered, true, req.Sequence, req.EventType, req.GroupUin, "")
+					_ = bot.Client.SetGroupRequest(req.IsFiltered, true, req.Sequence, uint32(req.EventType), req.GroupUin, "")
 				} else {
-					_ = bot.Client.SetGroupRequest(req.IsFiltered, false, req.Sequence, req.EventType, req.GroupUin, reason)
+					_ = bot.Client.SetGroupRequest(req.IsFiltered, false, req.Sequence, uint32(req.EventType), req.GroupUin, reason)
 				}
 				return OK(nil)
 			}
