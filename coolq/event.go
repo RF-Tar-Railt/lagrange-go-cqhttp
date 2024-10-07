@@ -423,8 +423,7 @@ func (bot *CQBot) friendRequestEvent(_ *client.QQClient, e *event2.NewFriendRequ
 //}
 
 func (bot *CQBot) groupInvitedEvent(_ *client.QQClient, e *event2.GroupInvite) {
-	// todo: 暂时先这样吧，群名不好拿
-	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupUin, e.GroupUin, e.InvitorNick, e.InvitorUin)
+	log.Infof("收到来自群 %v(%v) 内用户 %v(%v) 的加群邀请.", e.GroupName, e.GroupUin, e.InvitorNick, e.InvitorUin)
 	flag := strconv.FormatInt(int64(e.RequestSeq), 10)
 	bot.dispatchEvent("request/group/invite", global.MSG{
 		"group_id":   e.GroupUin,

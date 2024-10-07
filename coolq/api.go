@@ -134,11 +134,10 @@ func (bot *CQBot) CQGetGroupList(noCache bool, spec *onebot.Spec) global.MSG {
 	gs := make([]global.MSG, 0, len(grpInfos))
 	for _, g := range grpInfos {
 		gs = append(gs, global.MSG{
-			"group_id":   spec.ConvertID(g.GroupUin),
-			"group_name": g.GroupName,
-			// TODO nt协议好像获取不到这俩信息
-			"group_create_time": 0,
-			"group_level":       0,
+			"group_id":          spec.ConvertID(g.GroupUin),
+			"group_name":        g.GroupName,
+			"group_create_time": g.GroupCreateTime,
+			"group_level":       g.GroupLevel,
 			"max_member_count":  g.MaxMember,
 			"member_count":      g.MemberCount,
 		})
@@ -159,8 +158,8 @@ func (bot *CQBot) CQGetGroupInfo(groupID int64, noCache bool, spec *onebot.Spec)
 		return OK(global.MSG{
 			"group_id":          spec.ConvertID(group.GroupUin),
 			"group_name":        group.GroupName,
-			"group_create_time": 0,
-			"group_level":       0,
+			"group_create_time": group.GroupCreateTime,
+			"group_level":       group.GroupLevel,
 			"max_member_count":  group.MaxMember,
 			"member_count":      group.MemberCount,
 		})
