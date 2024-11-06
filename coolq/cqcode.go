@@ -113,13 +113,13 @@ func toElements(e []message.IMessageElement, source message.Source) (r []msg.Ele
 				},
 			}
 		// TODO LightAppElement
-		//case *message.LightAppElement:
-		//	m = msg.Element{
-		//		Type: "json",
-		//		Data: pairs{
-		//			{K: "data", V: o.Content},
-		//		},
-		//	}
+		case *message.LightAppElement:
+			m = msg.Element{
+				Type: "json",
+				Data: pairs{
+					{K: "data", V: o.Content},
+				},
+			}
 		case *message.AtElement:
 			target := "all"
 			if o.TargetUin != 0 {
@@ -296,11 +296,11 @@ func ToMessageContent(e []message.IMessageElement, source message.Source) (r []g
 				"type": "text",
 				"data": global.MSG{"text": o.Content},
 			}
-		//case *message.LightAppElement:
-		//	m = global.MSG{
-		//		"type": "json",
-		//		"data": global.MSG{"data": o.Content},
-		//	}
+		case *message.LightAppElement:
+			m = global.MSG{
+				"type": "json",
+				"data": global.MSG{"data": o.Content},
+			}
 		case *message.AtElement:
 			if o.TargetUin == 0 {
 				m = global.MSG{
@@ -802,6 +802,8 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 	//	}
 	//	// resid不为0的情况下走富文本通道，后续补全透传service Id，此处暂时不处理 TODO
 	//	return message.NewRichJson(data), nil
+	case "json":
+		return message.NewLightApp(elem.Get("data")), nil
 	//case "cardimage":
 	//	source := elem.Get("source")
 	//	icon := elem.Get("icon")

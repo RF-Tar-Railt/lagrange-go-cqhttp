@@ -23,11 +23,6 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			return c.bot.CQGetLoginInfo()
 		case "get_version_info":
 			return c.bot.CQGetVersionInfo()
-		case "send_group_msg":
-			p0 := p.Get("group_id").Int()
-			p1 := p.Get("message")
-			p2 := p.Get("auto_escape").Bool()
-			return c.bot.CQSendGroupMessage(p0, p1, p2)
 		case "send_msg":
 			p0 := p.Get("group_id").Int()
 			p1 := p.Get("user_id").Int()
@@ -41,6 +36,28 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			p2 := p.Get("message")
 			p3 := p.Get("auto_escape").Bool()
 			return c.bot.CQSendPrivateMessage(p0, p1, p2, p3)
+		case "send_group_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("message")
+			p2 := p.Get("auto_escape").Bool()
+			return c.bot.CQSendGroupMessage(p0, p1, p2)
+		case "send_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("user_id").Int()
+			p2 := p.Get("messages")
+			p3 := p.Get("message_type").String()
+			return c.bot.CQSendForwardMessage(p0, p1, p2, p3)
+		case "send_group_forward_msg":
+			p0 := p.Get("group_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendGroupForwardMessage(p0, p1)
+		case "send_private_forward_msg":
+			p0 := p.Get("user_id").Int()
+			p1 := p.Get("messages")
+			return c.bot.CQSendPrivateForwardMessage(p0, p1)
+		case "get_stranger_info":
+			p0 := p.Get("user_id").Int()
+			return c.bot.CQGetStrangerInfo(p0)
 		}
 	}
 	if spec.Version == 12 {
@@ -55,9 +72,15 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			p2 := p.Get("detail_type").String()
 			p3 := p.Get("message")
 			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
+		case "get_user_info":
+			p0 := p.Get("user_id").String()
+			return c.bot.CQGetStrangerInfoV12(p0)
 		}
 	}
 	switch action {
+	case "get_forward_msg":
+		p0 := p.Get("[message_id,id].0").String()
+		return c.bot.CQGetForwardMessage(p0)
 	case "delete_msg":
 		p0 := int32(p.Get("message_id").Int())
 		return c.bot.CQDeleteMessage(p0)
@@ -159,6 +182,48 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			p1 = pt.Bool()
 		}
 		return c.bot.CQSetGroupWholeBan(p0, p1)
+	case "get_group_honor_info":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("type").String()
+		return c.bot.CQGetGroupHonorInfo(p0, p1)
+	case "get_group_file_system_info":
+		p0 := p.Get("group_id").Int()
+		return c.bot.CQGetGroupFileSystemInfo(p0)
+	case "get_group_root_files":
+		p0 := p.Get("group_id").Int()
+		return c.bot.CQGetGroupRootFiles(p0)
+	case "get_group_files_by_folder":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("folder_id").String()
+		return c.bot.CQGetGroupFilesByFolder(p0, p1)
+	case "get_group_file_url":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("file_id").String()
+		p2 := p.Get("[busid,bus_id].0").String()
+		return c.bot.CQGetGroupFileUrl(p0, p1, p2)
+	case "upload_group_file":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("file").String()
+		p2 := p.Get("name").String()
+		p3 := p.Get("folder").String()
+		return c.bot.CQUploadGroupFile(p0, p1, p2, p3)
+	case "upload_private_file":
+		p0 := p.Get("user_id").Int()
+		p1 := p.Get("file").String()
+		p2 := p.Get("name").String()
+		return c.bot.CQUploadPrivateFile(p0, p1, p2)
+	case "create_group_file_folder":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("folder_name").String()
+		return c.bot.CQCreateGroupFileFolder(p0, p1)
+	case "delete_group_folder":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("folder_id").String()
+		return c.bot.CQDeleteGroupFolder(p0, p1)
+	case "delete_group_file":
+		p0 := p.Get("group_id").Int()
+		p1 := p.Get("file_id").String()
+		p2 := p.Get("[busid,bus_id].0").String()
 	}
 	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 }
