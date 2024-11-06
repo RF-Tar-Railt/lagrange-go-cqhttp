@@ -74,7 +74,7 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 			return c.bot.CQSendMessageV12(p0, p1, p2, p3)
 		case "get_user_info":
 			p0 := p.Get("user_id").String()
-			return c.bot.CQGetStrangerInfoV12(p0)
+			return c.bot.CQGetStrangerInfo(p0)
 		}
 	}
 	switch action {
@@ -195,12 +195,12 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	case "get_group_files_by_folder":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("folder_id").String()
-		return c.bot.CQGetGroupFilesByFolder(p0, p1)
+		return c.bot.CQGetGroupFilesByFolderID(p0, p1)
 	case "get_group_file_url":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("file_id").String()
 		p2 := p.Get("[busid,bus_id].0").String()
-		return c.bot.CQGetGroupFileUrl(p0, p1, p2)
+		return c.bot.CQGetGroupFileURL(p0, p1, p2)
 	case "upload_group_file":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("file").String()
@@ -215,15 +215,16 @@ func (c *Caller) call(action string, spec *onebot.Spec, p Getter) global.MSG {
 	case "create_group_file_folder":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("folder_name").String()
-		return c.bot.CQCreateGroupFileFolder(p0, p1)
+		return c.bot.CQGroupFileCreateFolder(p0, p1)
 	case "delete_group_folder":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("folder_id").String()
-		return c.bot.CQDeleteGroupFolder(p0, p1)
+		return c.bot.CQGroupFileDeleteFolder(p0, p1)
 	case "delete_group_file":
 		p0 := p.Get("group_id").Int()
 		p1 := p.Get("file_id").String()
 		p2 := p.Get("[busid,bus_id].0").String()
+		return c.bot.CQGroupFileDeleteFile(p0, p1, p2)
 	}
 	return coolq.Failed(404, "API_NOT_FOUND", "API不存在")
 }
