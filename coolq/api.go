@@ -426,6 +426,7 @@ func (bot *CQBot) uploadForwardElement(m gjson.Result, target int64, sourceType 
 					})
 				case *msg.LocalImage:
 					w.do(func() {
+						log.Warnf("[debug]上传图片 %v in %v", o, source)
 						gm, err := bot.uploadLocalImage(source, o)
 						if err != nil {
 							log.Warnf(uploadFailedTemplate, "合并转发", target, "图片", err)
@@ -531,10 +532,6 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 	if m.Type != gjson.JSON {
 		return Failed(100)
 	}
-	source := message.Source{
-		SourceType: message.SourcePrivate,
-		PrimaryID:  0,
-	}
 	fe, err := bot.uploadForwardElement(m, groupID, message.SourceGroup)
 	if err != nil {
 		return Failed(100, "UPLOAD_FAILED", "上传合并转发消息失败")
@@ -550,6 +547,10 @@ func (bot *CQBot) CQSendGroupForwardMessage(groupID int64, m gjson.Result) globa
 		}
 		log.Warnf("合并转发(群 %v)消息发送失败: 账号可能被风控.", groupID)
 		return Failed(100, "SEND_MSG_API_ERROR", "请参考 go-cqhttp 端输出")
+	}
+	source := message.Source{
+		SourceType: message.SourcePrivate,
+		PrimaryID:  0,
 	}
 	mid := bot.InsertGroupMessage(ret, source)
 	log.Infof("发送群 %v(%v)  的合并转发消息: %v (%v)", groupID, groupID, limitedString(m.String()), mid)
