@@ -46,6 +46,12 @@ func PathExists(path string) bool {
 	return err == nil || errors.Is(err, os.ErrExist)
 }
 
+// FileExists 判断给定path是否为存在且path为文件
+func FileExists(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && !fi.IsDir()
+}
+
 // ReadAllText 读取给定path对应文件，无法读取时返回空值
 func ReadAllText(path string) string {
 	b, err := os.ReadFile(path)

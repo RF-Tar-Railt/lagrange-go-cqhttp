@@ -885,7 +885,7 @@ func (bot *CQBot) ConvertElement(spec *onebot.Spec, elem msg.Element, sourceType
 func (bot *CQBot) makeImageOrVideoElem(elem msg.Element, video bool, sourceType message.SourceType) (message.IMessageElement, error) {
 	f := elem.Get("file")
 	u := elem.Get("url")
-	if strings.HasPrefix(u, "http") {
+	if strings.HasPrefix(f, "http") {
 		hash := md5.Sum([]byte(f))
 		cacheFile := path.Join(global.CachePath, hex.EncodeToString(hash[:])+".cache")
 		maxSize := int64(maxImageSize)
@@ -901,7 +901,7 @@ func (bot *CQBot) makeImageOrVideoElem(elem msg.Element, video bool, sourceType 
 			_ = os.Remove(cacheFile)
 		}
 		{
-			r := download.Request{URL: u, Limit: maxSize}
+			r := download.Request{URL: f, Limit: maxSize}
 			if err := r.WriteToFileMultiThreading(cacheFile, thread); err != nil {
 				return nil, err
 			}
@@ -980,7 +980,7 @@ func (bot *CQBot) makeImageOrVideoElem(elem msg.Element, video bool, sourceType 
 			}
 		}
 	}
-	exist := global.PathExists(rawPath)
+	exist := global.FileExists(rawPath)
 	if !exist {
 		if elem.Get("url") != "" {
 			elem.Data = []msg.Pair{{K: "file", V: elem.Get("url")}}
